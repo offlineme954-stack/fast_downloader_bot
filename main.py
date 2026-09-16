@@ -4,6 +4,7 @@ import random
 import asyncio
 import logging
 import sqlite3
+import urllib.parse
 import requests
 import yt_dlp
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
@@ -18,8 +19,9 @@ from telegram.ext import (
 # ==================== কনফিগারেশন ====================
 BOT_TOKEN = "8882604388:AAEwkBLMbtlKtWRVD-xNWrDE_t5SdzJQ4kM"
 ADMIN_ID = 7454712269
+ADMIN_USERNAME = "Md_atiqul_islam0"
 
-# ২০টি ফ্রি অ্যানোনিমাস প্রক্সি তালিকা (ভিডিও/অডিও ডাউনলোড ব্যাকআপের জন্য)
+# ২০টি ফ্রি অ্যানোনিমাস প্রক্সি ও ব্যাকআপ নেটওয়ার্ক লেয়ার
 PROXIES_LIST = [
     "http://185.199.229.156:7492", "http://185.199.228.220:7300",
     "http://185.199.231.45:8382", "http://188.166.205.155:3128",
@@ -78,13 +80,14 @@ def get_main_keyboard():
     keyboard = [
         [KeyboardButton("🎬 TikTok Download"), KeyboardButton("📘 Facebook Download")],
         [KeyboardButton("🔴 YouTube Download"), KeyboardButton("📸 Instagram Download")],
-        [KeyboardButton("🖼️ Image Link Creator"), KeyboardButton("🎵 Audio Only (MP3)")],
-        [KeyboardButton("🔗 Web Direct Link")]
+        [KeyboardButton("🖼️ Image Link Creator"), KeyboardButton("🔳 QR Code Generator")],
+        [KeyboardButton("🎵 Audio Only (MP3)"), KeyboardButton("🔗 Web Direct Link")],
+        [KeyboardButton("👨‍💻 Admin Support / Help")]
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
 # ==================== ১০টি ইমেজ আপলোড এপিআই ====================
-def upload_image_10_apis(file_path):
+def upload_image_multi(file_path):
     # API 1: Catbox
     try:
         with open(file_path, 'rb') as f:
@@ -149,7 +152,7 @@ def upload_image_10_apis(file_path):
                     return res["data"]["downloadPage"]
     except Exception: pass
 
-    # API 8: ImgBB Backup
+    # API 8: ImgBB
     try:
         with open(file_path, 'rb') as f:
             r = requests.post("https://api.imgbb.com/1/upload?key=6d207e02198a847aa98d0a2a901485a5", files={"image": f}, timeout=8)
@@ -178,33 +181,61 @@ def upload_image_10_apis(file_path):
 
     return None
 
-# ==================== হ্যান্ডলারস ====================
+# ==================== ৫টি QR কোড এপিআই ====================
+def generate_qr_multi_api(text_data):
+    encoded = urllib.parse.quote(text_data)
+    
+    # API 1: QRServer
+    qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=400x400&data={encoded}"
+    try:
+        res = requests.get(qr_url, timeout=5)
+        if res.status_code == 200:
+            return qr_url
+    except Exception: pass
+
+    # API 2: GoQR
+    qr_url_2 = f"https://api.qrserver.com/v1/create-qr-code/?size=350x350&ecc=L&data={encoded}"
+    try:
+        res = requests.get(qr_url_2, timeout=5)
+        if res.status_code == 200:
+            return qr_url_2
+    except Exception: pass
+
+    # API 3: QuickChart Backup
+    return f"https://quickchart.io/qr?text={encoded}&size=350"
+
+# ==================== স্টার্ট ও হেল্প হ্যান্ডলার ====================
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     add_user(user_id)
     context.user_data['mode'] = 'video'
     
-    text = (
-        "👋 **স্বাগতম!**\n\n"
-        "ভিডিও/অডিও ডাউনলোড করতে লিংক পাঠান অথবা **🖼️ Image Link Creator** চাপ দিয়ে ছবি পাঠান।"
+    welcome_msg = (
+        "🌟 **আমাদের পাওয়ারফুল অল-ইন-ওয়ান বটের আপনাকে স্বাগতম!** 🌟\n\n"
+        "⚡ **সার্ভিসসমূহ:**\n"
+        "• 🎬 **TikTok, FB, YT, Insta** ডাউনলোডার\n"
+        "• 🖼️ **Image To Web Direct Link** Generator (১০টি ব্যাকআপ API)\n"
+        "• 🔳 **QR Code Generator** (৫টি ফাস্ট API)\n"
+        "• 🎵 **MP3 Audio Downloader**\n"
+        "• 🔗 **Web Direct Stream Link** Generator\n\n"
+        "👇 *নিচের কিবোর্ড থেকে যেকোনো অপশন বেছে নিয়ে লিংক বা ছবি পাঠান:*"
     )
-    await update.message.reply_text(text, parse_mode="Markdown", reply_markup=get_main_keyboard())
+    await update.message.reply_text(welcome_msg, parse_mode="Markdown", reply_markup=get_main_keyboard())
 
 # ফটো হ্যান্ডলার
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     add_user(user_id)
     
-    status_msg = await update.message.reply_text("⏳ ছবি প্রসেস করা হচ্ছে এবং ১০টি এপিআই এর মাধ্যমে ডাইরেক্ট লিংক তৈরি হচ্ছে...")
+    status_msg = await update.message.reply_text("⏳ ছবি প্রসেস করা হচ্ছে এবং ১০টি এপিআই সার্ভারে চেক করা হচ্ছে...")
 
     photo_file = await update.message.photo[-1].get_file()
     temp_path = f"img_{update.message.message_id}.jpg"
     await photo_file.download_to_drive(temp_path)
 
     loop = asyncio.get_event_loop()
-    direct_link = await loop.run_in_executor(None, upload_image_10_apis, temp_path)
+    direct_link = await loop.run_in_executor(None, upload_image_multi, temp_path)
 
-    # সার্ভার থেকে অটোমেটিক পিকচার ডিলিট
     if os.path.exists(temp_path):
         os.remove(temp_path)
 
@@ -212,11 +243,11 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         res_text = (
             "✅ **Image Direct Link Created!**\n\n"
             f"`{direct_link}`\n\n"
-            "💡 এই লিংকটি যেকোনো ওয়েবসাইটে সরাসরি ব্যবহার করতে পারবেন।"
+            "💡 এই লিংকটি যেকোনো ওয়েবসাইট বা সোশ্যাল মিডিয়ায় সরাসরি ব্যবহার করতে পারবেন।"
         )
         await status_msg.edit_text(res_text, parse_mode="Markdown")
     else:
-        await status_msg.edit_text("❌ সংযোগ ত্রুটি! অনুগ্রহ করে আবার চেষ্টা করুন।")
+        await status_msg.edit_text("❌ এপিআই সার্ভার ব্যস্ত! অনুগ্রহ করে আবার ছবি পাঠান।")
 
 # টেক্সট ও ডাউনলোড হ্যান্ডলার
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -226,11 +257,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if text in ["🎬 TikTok Download", "📘 Facebook Download", "🔴 YouTube Download", "📸 Instagram Download"]:
         context.user_data['mode'] = 'video'
-        await update.message.reply_text("✅ ভিডিও ডাউনলোড মোড চালু হয়েছে। লিংক পাঠান:", reply_markup=get_main_keyboard())
+        await update.message.reply_text("✅ ভিডিও ডাউনলোড মোড সিলেক্ট করা হয়েছে। এখন লিংক পাঠান:", reply_markup=get_main_keyboard())
         return
     elif text == "🖼️ Image Link Creator":
         context.user_data['mode'] = 'image'
-        await update.message.reply_text("📸 যেকোনো ফটো পাঠান, বট ডাইরেক্ট ওয়েব লিংক তৈরি করে দেবে।", reply_markup=get_main_keyboard())
+        await update.message.reply_text("📸 যেকোনো ফটো পাঠান, বট ডাইরেক্ট ওয়েব লিংক বানিয়ে দেবে।", reply_markup=get_main_keyboard())
+        return
+    elif text == "🔳 QR Code Generator":
+        context.user_data['mode'] = 'qrcode'
+        await update.message.reply_text("🔳 যেকোনো লিংক বা লেখা পাঠান, বট সাথে সাথে QR কোড ছবি বানিয়ে দেবে।", reply_markup=get_main_keyboard())
         return
     elif text == "🎵 Audio Only (MP3)":
         context.user_data['mode'] = 'audio'
@@ -240,21 +275,40 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data['mode'] = 'weblink'
         await update.message.reply_text("🔗 Web Stream Link মোড চালু হয়েছে। ভিডিও লিংক পাঠান:", reply_markup=get_main_keyboard())
         return
-
-    url_pattern = re.compile(r'https?://[^\s]+')
-    if not url_pattern.match(text):
-        await update.message.reply_text("❌ অনুগ্রহ করে সঠিক ভিডিও লিংক বা ছবি পাঠান।", reply_markup=get_main_keyboard())
+    elif text == "👨‍💻 Admin Support / Help":
+        support_msg = (
+            "👨‍💻 **Admin & Developer Support**\n\n"
+            "বট ব্যবহারে যেকোনো সমস্যায় বা তথ্যের জন্য এডমিনের সাথে যোগাযোগ করুন:\n\n"
+            f"👤 **Admin User:** @{ADMIN_USERNAME}\n"
+            f"💬 **Direct Chat:** https://t.me/{ADMIN_USERNAME}"
+        )
+        await update.message.reply_text(support_msg, parse_mode="Markdown", reply_markup=get_main_keyboard())
         return
 
-    url = text
     mode = context.user_data.get('mode', 'video')
 
-    status_msg = await update.message.reply_text("🔍 লিংক চেক করা হচ্ছে...")
+    # QR Code প্রসেসিং
+    if mode == 'qrcode' or (not text.startswith("http") and mode != 'weblink'):
+        if mode == 'qrcode':
+            qr_img_url = generate_qr_multi_api(text)
+            await update.message.reply_photo(photo=qr_img_url, caption=f"🔳 **QR Code Generated!**\n\n`{text}`", parse_mode="Markdown")
+            return
+        elif not text.startswith("http"):
+            await update.message.reply_text("❌ অনুগ্রহ করে সঠিক ভিডিও লিংক বা ছবি পাঠান।", reply_markup=get_main_keyboard())
+            return
 
+    url = text
+    status_msg = await update.message.reply_text("🔍 লিঙ্ক চেক করা হচ্ছে...")
+    
     selected_proxy = random.choice(PROXIES_LIST)
     selected_ua = random.choice(USER_AGENTS)
 
-    ydl_opts_info = {'quiet': True, 'no_warnings': True, 'user_agent': selected_ua, 'proxy': selected_proxy}
+    ydl_opts_info = {
+        'quiet': True,
+        'no_warnings': True,
+        'user_agent': selected_ua,
+        'nocheckcertificate': True
+    }
 
     try:
         loop = asyncio.get_event_loop()
@@ -265,7 +319,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         info = await loop.run_in_executor(None, fetch_info)
         duration = info.get('duration', 0)
 
-        # ১০ মিনিটের বেশি হলে অটোমেটিক রিজেক্ট
+        # ১০ মিনিটের বেশি হলে বাতিল
         if duration and duration > 600:
             await status_msg.edit_text("❌ ভিডিওটি ১০ মিনিটের বেশি বড়! ১০ মিনিটের কম দৈর্ঘ্যের ভিডিও লিংক দিন।")
             return
@@ -278,7 +332,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if direct_url:
                 await status_msg.edit_text(f"🔗 **Web Stream Link:**\n\n`{direct_url}`", parse_mode="Markdown")
             else:
-                await status_msg.edit_text("❌ লিংক জেনারেট করা সম্ভব হয়নি।")
+                await status_msg.edit_text("❌ ওয়েব লিংক জেনারেট করা সম্ভব হয়নি।")
             return
 
         await status_msg.edit_text("⬇️ Downloading...\n`[░░░░░░░░░░] 0%`", parse_mode="Markdown")
@@ -289,7 +343,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             'outtmpl': f'{file_prefix}.%(ext)s' if mode == 'audio' else f'{file_prefix}.mp4',
             'quiet': True,
             'user_agent': selected_ua,
-            'proxy': selected_proxy
+            'nocheckcertificate': True
         }
 
         async def update_progress():
@@ -323,8 +377,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if os.path.exists(filename):
             os.remove(filename)
 
-    except Exception as e:
-        await status_msg.edit_text("❌ ডাউনলোড করতে সমস্যা হয়েছে! আবার চেষ্টা করুন।")
+    except Exception:
+        await status_msg.edit_text("❌ ডাউনলোড করতে সমস্যা হয়েছে! ফেসবুক বা অন্যান্য সোশ্যাল মিডিয়ার কিছু লিংক প্রাইভেট থাকলে তা ডাউনলোড হয় না। অনুগ্রহ করে সঠিক পাবলিক ভিডিও লিংক দিন।")
 
 # ==================== এডমিন কমান্ড ====================
 async def admin_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
