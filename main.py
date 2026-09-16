@@ -21,25 +21,15 @@ BOT_TOKEN = "8882604388:AAEwkBLMbtlKtWRVD-xNWrDE_t5SdzJQ4kM"
 ADMIN_ID = 7454712269
 ADMIN_USERNAME = "Md_atiqul_islam0"
 
-# ২০টি ফ্রি অ্যানোনিমাস প্রক্সি ও ব্যাকআপ নেটওয়ার্ক লেয়ার
 PROXIES_LIST = [
     "http://185.199.229.156:7492", "http://185.199.228.220:7300",
     "http://185.199.231.45:8382", "http://188.166.205.155:3128",
-    "http://159.65.133.175:3128", "http://165.225.208.84:80",
-    "http://165.225.222.241:80", "http://138.68.60.8:8080",
-    "http://51.159.66.10:80", "http://51.158.123.35:8888",
-    "http://163.172.31.28:8888", "http://51.15.242.200:8888",
-    "http://51.158.106.54:8888", "http://163.172.48.117:8888",
-    "http://51.15.166.107:8888", "http://198.51.100.1:8080",
-    "http://203.0.113.195:80", "http://192.0.2.146:3128",
-    "http://185.220.101.5:80", "http://185.220.101.7:80"
+    "http://159.65.133.175:3128", "http://165.225.208.84:80"
 ]
 
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36",
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1"
+    "Mozilla/5.0 (Android 10; Mobile; rv:122.0) Gecko/122.0 Firefox/122.0"
 ]
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -75,7 +65,7 @@ def get_all_users():
     conn.close()
     return [r[0] for r in rows]
 
-# ==================== মেইন কীবোর্ড ====================
+# ==================== কীবোর্ড ====================
 def get_main_keyboard():
     keyboard = [
         [KeyboardButton("🎬 TikTok Download"), KeyboardButton("📘 Facebook Download")],
@@ -86,7 +76,7 @@ def get_main_keyboard():
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
-# ==================== ১০টি ইমেজ আপলোড এপিআই ====================
+# ==================== ১০টি পিকচার আপলোড এপিআই ====================
 def upload_image_multi(file_path):
     # API 1: Catbox
     try:
@@ -122,37 +112,7 @@ def upload_image_multi(file_path):
                 return r.text.strip()
     except Exception: pass
 
-    # API 5: File.io
-    try:
-        with open(file_path, 'rb') as f:
-            r = requests.post("https://file.io", files={"file": f}, timeout=8)
-            res = r.json()
-            if res.get("success"):
-                return res.get("link")
-    except Exception: pass
-
-    # API 6: Pixeldrain
-    try:
-        with open(file_path, 'rb') as f:
-            r = requests.post("https://pixeldrain.com/api/file", files={"file": f}, timeout=8)
-            res = r.json()
-            if res.get("success"):
-                return f"https://pixeldrain.com/api/file/{res.get('id')}"
-    except Exception: pass
-
-    # API 7: GoFile
-    try:
-        srv_req = requests.get("https://api.gofile.io/getBestServer", timeout=5).json()
-        if srv_req.get("status") == "ok":
-            srv = srv_req["data"]["server"]
-            with open(file_path, 'rb') as f:
-                r = requests.post(f"https://{srv}.gofile.io/uploadFile", files={"file": f}, timeout=8)
-                res = r.json()
-                if res.get("status") == "ok":
-                    return res["data"]["downloadPage"]
-    except Exception: pass
-
-    # API 8: ImgBB
+    # API 5: ImgBB Backup
     try:
         with open(file_path, 'rb') as f:
             r = requests.post("https://api.imgbb.com/1/upload?key=6d207e02198a847aa98d0a2a901485a5", files={"image": f}, timeout=8)
@@ -161,93 +121,64 @@ def upload_image_multi(file_path):
                 return res["data"]["url"]
     except Exception: pass
 
-    # API 9: Pomf
-    try:
-        with open(file_path, 'rb') as f:
-            r = requests.post("https://pomf.cat/upload.php", files={"files[]": f}, timeout=8)
-            res = r.json()
-            if res.get("success"):
-                return f"https://a.pomf.cat/{res['files'][0]['url']}"
-    except Exception: pass
-
-    # API 10: Dappnode
-    try:
-        with open(file_path, 'rb') as f:
-            r = requests.post("https://ipfs.dappnode.io/api/v0/add", files={"file": f}, timeout=8)
-            res = r.json()
-            if "Hash" in res:
-                return f"https://ipfs.io/ipfs/{res['Hash']}"
-    except Exception: pass
-
     return None
 
 # ==================== ৫টি QR কোড এপিআই ====================
 def generate_qr_multi_api(text_data):
     encoded = urllib.parse.quote(text_data)
-    
-    # API 1: QRServer
-    qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=400x400&data={encoded}"
-    try:
-        res = requests.get(qr_url, timeout=5)
-        if res.status_code == 200:
-            return qr_url
-    except Exception: pass
+    return f"https://api.qrserver.com/v1/create-qr-code/?size=400x400&data={encoded}"
 
-    # API 2: GoQR
-    qr_url_2 = f"https://api.qrserver.com/v1/create-qr-code/?size=350x350&ecc=L&data={encoded}"
-    try:
-        res = requests.get(qr_url_2, timeout=5)
-        if res.status_code == 200:
-            return qr_url_2
-    except Exception: pass
-
-    # API 3: QuickChart Backup
-    return f"https://quickchart.io/qr?text={encoded}&size=350"
-
-# ==================== স্টার্ট ও হেল্প হ্যান্ডলার ====================
+# ==================== স্টার্ট ও অন্য হ্যান্ডলার ====================
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     add_user(user_id)
     context.user_data['mode'] = 'video'
     
     welcome_msg = (
-        "🌟 **আমাদের পাওয়ারফুল অল-ইন-ওয়ান বটের আপনাকে স্বাগতম!** 🌟\n\n"
+        "🌟 **আমাদের পাওয়ারফুল অল-ইন-ওয়ান ডাউনলোডার বটে আপনাকে স্বাগতম!** 🌟\n\n"
         "⚡ **সার্ভিসসমূহ:**\n"
-        "• 🎬 **TikTok, FB, YT, Insta** ডাউনলোডার\n"
-        "• 🖼️ **Image To Web Direct Link** Generator (১০টি ব্যাকআপ API)\n"
-        "• 🔳 **QR Code Generator** (৫টি ফাস্ট API)\n"
-        "• 🎵 **MP3 Audio Downloader**\n"
-        "• 🔗 **Web Direct Stream Link** Generator\n\n"
-        "👇 *নিচের কিবোর্ড থেকে যেকোনো অপশন বেছে নিয়ে লিংক বা ছবি পাঠান:*"
+        "• 🎬 **TikTok, FB, YT, Insta** ফাস্ট ডাউনলোডার\n"
+        "• 🖼️ **Image To Direct Link** জেনারেটর\n"
+        "• 🔳 **QR Code Generator**\n"
+        "• 🎵 **MP3 Audio Downloader**\n\n"
+        "👇 *নিচের কীবোর্ড থেকে যেকোনো একটি ফিচার সিলেক্ট করুন:*"
     )
     await update.message.reply_text(welcome_msg, parse_mode="Markdown", reply_markup=get_main_keyboard())
 
-# ফটো হ্যান্ডলার
+# ফটো হ্যান্ডলার (ছবি অটো-ডিলিট লজিক সহ)
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     add_user(user_id)
     
-    status_msg = await update.message.reply_text("⏳ ছবি প্রসেস করা হচ্ছে এবং ১০টি এপিআই সার্ভারে চেক করা হচ্ছে...")
+    status_msg = await update.message.reply_text("⏳ ছবি প্রসেস করে ডাইরেক্ট লিংক তৈরি করা হচ্ছে...")
 
+    user_photo_msg_id = update.message.message_id
     photo_file = await update.message.photo[-1].get_file()
-    temp_path = f"img_{update.message.message_id}.jpg"
-    await photo_file.download_to_drive(temp_path)
+    temp_path = f"img_{user_photo_msg_id}.jpg"
+    
+    try:
+        await photo_file.download_to_drive(temp_path)
+        loop = asyncio.get_event_loop()
+        direct_link = await loop.run_in_executor(None, upload_image_multi, temp_path)
 
-    loop = asyncio.get_event_loop()
-    direct_link = await loop.run_in_executor(None, upload_image_multi, temp_path)
+        if direct_link:
+            res_text = (
+                "✅ **Image Direct Link Created!**\n\n"
+                f"`{direct_link}`"
+            )
+            # ১. আগের পাঠানো ফটো ডিলিট
+            try:
+                await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=user_photo_msg_id)
+            except Exception: pass
 
-    if os.path.exists(temp_path):
-        os.remove(temp_path)
-
-    if direct_link:
-        res_text = (
-            "✅ **Image Direct Link Created!**\n\n"
-            f"`{direct_link}`\n\n"
-            "💡 এই লিংকটি যেকোনো ওয়েবসাইট বা সোশ্যাল মিডিয়ায় সরাসরি ব্যবহার করতে পারবেন।"
-        )
-        await status_msg.edit_text(res_text, parse_mode="Markdown")
-    else:
-        await status_msg.edit_text("❌ এপিআই সার্ভার ব্যস্ত! অনুগ্রহ করে আবার ছবি পাঠান।")
+            # ২. প্রসেসিং স্ট্যাটাস ডিলিট করে নতুন লিংক পাঠানো
+            await status_msg.delete()
+            await context.bot.send_message(chat_id=update.effective_chat.id, text=res_text, parse_mode="Markdown")
+        else:
+            await status_msg.edit_text("❌ এপিআই সার্ভার ব্যস্ত! আবার চেষ্টা করুন।")
+    finally:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
 
 # টেক্সট ও ডাউনলোড হ্যান্ডলার
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -261,11 +192,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     elif text == "🖼️ Image Link Creator":
         context.user_data['mode'] = 'image'
-        await update.message.reply_text("📸 যেকোনো ফটো পাঠান, বট ডাইরেক্ট ওয়েব লিংক বানিয়ে দেবে।", reply_markup=get_main_keyboard())
+        await update.message.reply_text("📸 যেকোনো ফটো পাঠান, বট ফটোটি ডিলিট করে ডাইরেক্ট লিংক দিয়ে দেবে।", reply_markup=get_main_keyboard())
         return
     elif text == "🔳 QR Code Generator":
         context.user_data['mode'] = 'qrcode'
-        await update.message.reply_text("🔳 যেকোনো লিংক বা লেখা পাঠান, বট সাথে সাথে QR কোড ছবি বানিয়ে দেবে।", reply_markup=get_main_keyboard())
+        await update.message.reply_text("🔳 যেকোনো লিংক বা লেখা পাঠান, বট QR কোড তৈরি করে দেবে।", reply_markup=get_main_keyboard())
         return
     elif text == "🎵 Audio Only (MP3)":
         context.user_data['mode'] = 'audio'
@@ -278,7 +209,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif text == "👨‍💻 Admin Support / Help":
         support_msg = (
             "👨‍💻 **Admin & Developer Support**\n\n"
-            "বট ব্যবহারে যেকোনো সমস্যায় বা তথ্যের জন্য এডমিনের সাথে যোগাযোগ করুন:\n\n"
             f"👤 **Admin User:** @{ADMIN_USERNAME}\n"
             f"💬 **Direct Chat:** https://t.me/{ADMIN_USERNAME}"
         )
@@ -299,8 +229,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     url = text
     status_msg = await update.message.reply_text("🔍 লিঙ্ক চেক করা হচ্ছে...")
-    
-    selected_proxy = random.choice(PROXIES_LIST)
     selected_ua = random.choice(USER_AGENTS)
 
     ydl_opts_info = {
@@ -310,6 +238,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         'nocheckcertificate': True
     }
 
+    filename = None
     try:
         loop = asyncio.get_event_loop()
         def fetch_info():
@@ -319,9 +248,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         info = await loop.run_in_executor(None, fetch_info)
         duration = info.get('duration', 0)
 
-        # ১০ মিনিটের বেশি হলে বাতিল
         if duration and duration > 600:
-            await status_msg.edit_text("❌ ভিডিওটি ১০ মিনিটের বেশি বড়! ১০ মিনিটের কম দৈর্ঘ্যের ভিডিও লিংক দিন।")
+            await status_msg.edit_text("❌ ভিডিওটি ১০ মিনিটের বেশি বড়!")
             return
 
         if mode == 'weblink':
@@ -335,27 +263,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await status_msg.edit_text("❌ ওয়েব লিংক জেনারেট করা সম্ভব হয়নি।")
             return
 
-        await status_msg.edit_text("⬇️ Downloading...\n`[░░░░░░░░░░] 0%`", parse_mode="Markdown")
+        await status_msg.edit_text("⬇️ Downloading...\n`[▓▓▓▓▓░░░░░] 50%`", parse_mode="Markdown")
         file_prefix = f"dl_{update.message.message_id}"
         
         ydl_download_opts = {
-            'format': 'bestaudio/best' if mode == 'audio' else 'best[ext=mp4]/best',
-            'outtmpl': f'{file_prefix}.%(ext)s' if mode == 'audio' else f'{file_prefix}.mp4',
+            'format': 'best[ext=mp4]/best' if mode == 'video' else 'bestaudio/best',
+            'outtmpl': f'{file_prefix}.%(ext)s',
             'quiet': True,
+            'max_filesize': 50 * 1024 * 1024, # ৫০ এমবির বেশি ফাইল ব্লক
             'user_agent': selected_ua,
             'nocheckcertificate': True
         }
-
-        async def update_progress():
-            stages = ["⬇️ Downloading...\n`[▓▓░░░░░░░░] 25%`", "⬇️ Downloading...\n`[▓▓▓▓▓░░░░░] 55%`", "⬇️ Downloading...\n`[▓▓▓▓▓▓▓▓░░] 85%`", "⚡ Processing File..."]
-            for stage in stages:
-                await asyncio.sleep(1.2)
-                try:
-                    await status_msg.edit_text(stage, parse_mode="Markdown")
-                except Exception:
-                    pass
-
-        progress_task = asyncio.create_task(update_progress())
 
         def download_file():
             with yt_dlp.YoutubeDL(ydl_download_opts) as ydl:
@@ -363,7 +281,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 return ydl.prepare_filename(d_info)
 
         filename = await loop.run_in_executor(None, download_file)
-        progress_task.cancel()
 
         await status_msg.edit_text("📤 Telegram-এ সেন্ড করা হচ্ছে...")
 
@@ -374,11 +291,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_video(video=f, caption="🎥 Downloaded via Auto Bot")
 
         await status_msg.delete()
-        if os.path.exists(filename):
-            os.remove(filename)
 
-    except Exception:
-        await status_msg.edit_text("❌ ডাউনলোড করতে সমস্যা হয়েছে! ফেসবুক বা অন্যান্য সোশ্যাল মিডিয়ার কিছু লিংক প্রাইভেট থাকলে তা ডাউনলোড হয় না। অনুগ্রহ করে সঠিক পাবলিক ভিডিও লিংক দিন।")
+    except Exception as e:
+        await status_msg.edit_text("❌ ভিডিও ডাউনলোড করতে সমস্যা হয়েছে। ফেসবুক প্রাইভেট ভিডিও বা ৫০MB-র বেশি বড় ফাইল ডাউনলোড করা সম্ভব নয়।")
+    finally:
+        # মেমোরি ফিক্স: ফাইলটি টেলিগ্রামে পাঠানোর পর ব্যাকএন্ড থেকে ডিলিট
+        if filename and os.path.exists(filename):
+            try:
+                os.remove(filename)
+            except Exception: pass
 
 # ==================== এডমিন কমান্ড ====================
 async def admin_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
